@@ -45,6 +45,74 @@ To keep everything working, do not remove `<!-- ... -->` sections.
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 
+# JCEF Bug Reproduction Plugin
+
+This IntelliJ IDEA plugin reproduces a critical NullPointerException bug in JCEF (Java Chromium Embedded Framework) that occurs when using JCEF webviews in dialog windows.
+
+## Bug Description
+
+**Issue**: NullPointerException: Cannot read field "objId" because "robj" is null
+
+This bug occurs in the JCEF remote message router implementation when:
+1. Creating JCEF webviews with message routers in dialog windows
+2. Opening and closing dialogs multiple times in rapid succession
+3. The error originates from `RemoteMessageRouterImpl.create()` at line 38
+
+## Reproduction Steps
+
+1. Install and run this plugin in IntelliJ IDEA 2025.1 or later
+2. Open the "MyToolWindow" tool window (should appear in the IDE sidebar)
+3. Click the "Open JCEF Dialog (Bug Reproduction)" button
+4. Close the dialog that opens
+5. **Repeat steps 3-4 rapidly 2-3 times**
+6. The NullPointerException should occur, breaking all JCEF instances in the IDE
+
+## Expected vs Actual Behavior
+
+- **Expected**: Dialog should open and close cleanly without errors
+- **Actual**: NullPointerException occurs, breaking all JCEF webviews in the IDE until restart
+
+## Environment
+
+- **IDE Version**: 2025.1+
+- **Platform**: Cross-platform (originally reported on macOS Sequoia 15.3.1)
+- **Plugin Type**: Uses JCEF webviews with message routers in DialogWrapper
+
+## Workaround
+
+Add the following JVM option to disable out-of-process JCEF:
+```
+-Dide.browser.jcef.out-of-process.enabled=false
+```
+
+This can be added via Help → Edit Custom VM Options in IntelliJ IDEA.
+
+## Technical Details
+
+The bug appears to be a race condition in the JCEF remote message router when:
+- Creating new JCEF instances per dialog
+- Rapid creation/disposal of JCEF browsers
+- Message router registration/cleanup timing
+
+The stack trace shows the issue originates in:
+```
+jcef/com.jetbrains.cef.remote.router.RemoteMessageRouterImpl.create(RemoteMessageRouterImpl.java:38)
+```
+
+## Plugin Structure
+
+- `JCEFTestDialog.kt`: Dialog containing JCEF webview with message router
+- `MyToolWindowFactory.kt`: Tool window with button to trigger the reproduction
+- Simple HTML page with JavaScript that communicates via JCEF message router
+
+## Build and Run
+
+```bash
+./gradlew runIde
+```
+
+This will start a new IntelliJ IDEA instance with the plugin installed.
+
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 

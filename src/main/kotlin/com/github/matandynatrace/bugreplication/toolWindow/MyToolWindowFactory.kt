@@ -1,6 +1,5 @@
 package com.github.matandynatrace.bugreplication.toolWindow
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -9,14 +8,18 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
 import com.github.matandynatrace.bugreplication.MyBundle
-import com.github.matandynatrace.bugreplication.services.MyProjectService
+import com.github.matandynatrace.bugreplication.dialog.JCEFTestDialog
+import java.awt.BorderLayout
+import java.awt.FlowLayout
 import javax.swing.JButton
-
+import javax.swing.BoxLayout
+import javax.swing.border.EmptyBorder
+import javax.swing.SwingUtilities
 
 class MyToolWindowFactory : ToolWindowFactory {
 
     init {
-        thisLogger().warn("Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
+        thisLogger().warn("JCEF Bug Reproduction Plugin - Testing NullPointerException issue with exact real-world pattern")
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -27,19 +30,41 @@ class MyToolWindowFactory : ToolWindowFactory {
 
     override fun shouldBeAvailable(project: Project) = true
 
-    class MyToolWindow(toolWindow: ToolWindow) {
+    class MyToolWindow(private val toolWindow: ToolWindow) {
 
-        private val service = toolWindow.project.service<MyProjectService>()
+        fun getContent() = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+            val mainPanel = JBPanel<JBPanel<*>>().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                border = EmptyBorder(10, 10, 10, 10)
+            }
 
-        fun getContent() = JBPanel<JBPanel<*>>().apply {
-            val label = JBLabel(MyBundle.message("randomLabel", "?"))
+            val titleLabel = JBLabel("JCEF Bug Reproduction Tool").apply {
+                font = font.deriveFont(16f).deriveFont(java.awt.Font.BOLD)
+            }
 
-            add(label)
-            add(JButton(MyBundle.message("shuffle")).apply {
+
+
+            val jcefTestButton = JButton("Open JCEF Dialog (Bug Reproduction)").apply {
                 addActionListener {
-                    label.text = MyBundle.message("randomLabel", service.getRandomNumber())
+                    val dialog = JCEFTestDialog(toolWindow.project)
+                    dialog.show()
                 }
-            })
+            }
+
+
+
+
+            // Add components with spacing
+            mainPanel.add(titleLabel)
+            mainPanel.add(javax.swing.Box.createVerticalStrut(10))
+            mainPanel.add(javax.swing.Box.createVerticalStrut(15))
+            mainPanel.add(javax.swing.Box.createVerticalStrut(15))
+            mainPanel.add(jcefTestButton)
+            mainPanel.add(javax.swing.Box.createVerticalStrut(10))
+            mainPanel.add(javax.swing.Box.createVerticalStrut(15))
+            mainPanel.add(javax.swing.Box.createVerticalStrut(10))
+
+            add(mainPanel, BorderLayout.CENTER)
         }
     }
 }
