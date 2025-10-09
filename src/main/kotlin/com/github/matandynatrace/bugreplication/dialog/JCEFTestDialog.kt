@@ -47,7 +47,7 @@ class CustomJCEFWebView() : JPanel(), AutoCloseable {
                 ): Boolean {
                     // Simple test response
                     try {
-                        callback?.success("Response: $request")
+                        callback?.success("Dialog Response: $request")
                     } catch (e: Exception) {
                         e.printStackTrace()
                         callback?.failure(500, "Error: ${e.message}")

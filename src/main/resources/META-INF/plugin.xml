@@ -10,6 +10,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.matandynatrace.bugreplication.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <toolWindow factoryClass="com.github.matandynatrace.bugreplication.toolWindow.JcefToolWindowFactory" id="JcefToolWindow"/>
         <postStartupActivity implementation="com.github.matandynatrace.bugreplication.startup.MyProjectActivity" />
     </extensions>
 </idea-plugin>
