@@ -17,7 +17,7 @@ import java.awt.BorderLayout
  * Custom JCEF WebView that mimics the real implementation pattern
  * This reproduces the exact pattern that causes the NullPointerException
  */
-class CustomJCEFWebView() : JPanel(), AutoCloseable {
+class JCEFTestDialog() : JPanel(), AutoCloseable {
 
     private var browser: JBCefBrowser? = null
     private var msgRouter: CefMessageRouter? = null
@@ -193,9 +193,9 @@ class CustomJCEFWebView() : JPanel(), AutoCloseable {
     }
 }
 
-class JCEFTestDialog(project: Project) : DialogWrapper(project) {
+class JCEFTestDialogWrapper(project: Project) : DialogWrapper(project) {
 
-    private var customWebView: CustomJCEFWebView? = null
+    private var customWebView: JCEFTestDialog? = null
 
     init {
         title = "JCEF Bug Reproduction Dialog - Rapid Open/Close Test"
@@ -208,7 +208,7 @@ class JCEFTestDialog(project: Project) : DialogWrapper(project) {
 
         try {
             // Create the custom webview that mimics the real implementation
-            customWebView = CustomJCEFWebView()
+            customWebView = JCEFTestDialog()
             panel.add(customWebView, BorderLayout.CENTER)
 
         } catch (e: Exception) {
