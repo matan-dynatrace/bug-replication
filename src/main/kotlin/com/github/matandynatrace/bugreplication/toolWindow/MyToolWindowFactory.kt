@@ -1,17 +1,18 @@
 package com.github.matandynatrace.bugreplication.toolWindow
 
 import com.github.matandynatrace.bugreplication.dialog.JCEFTestDialogWrapper
+import com.github.matandynatrace.bugreplication.dialogs.JCEFNullRefTestDialogWrapper
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
-import com.github.matandynatrace.bugreplication.dialogs.JCEFNullRefTestDialogWrapper
 import java.awt.BorderLayout
-import javax.swing.JButton
 import javax.swing.BoxLayout
+import javax.swing.JButton
 import javax.swing.border.EmptyBorder
 
 class MyToolWindowFactory : ToolWindowFactory {
@@ -55,6 +56,14 @@ class MyToolWindowFactory : ToolWindowFactory {
                 }
             }
 
+            val jcefRenderStallButton = JButton("Open JCEF Render Stall Tool Window (Rendering Bug Reproduction)").apply {
+                addActionListener {
+                    ToolWindowManager.getInstance(toolWindow.project)
+                        .getToolWindow("JcefRenderStall")
+                        ?.activate(null)
+                }
+            }
+
             // Add components with spacing
             mainPanel.add(titleLabel)
             mainPanel.add(javax.swing.Box.createVerticalStrut(10))
@@ -62,6 +71,7 @@ class MyToolWindowFactory : ToolWindowFactory {
             mainPanel.add(javax.swing.Box.createVerticalStrut(15))
             mainPanel.add(jcefTestButtonEventRouterProblem)
             mainPanel.add(jcefTestButtonNullRef)
+            mainPanel.add(jcefRenderStallButton)
             mainPanel.add(javax.swing.Box.createVerticalStrut(10))
             mainPanel.add(javax.swing.Box.createVerticalStrut(15))
             mainPanel.add(javax.swing.Box.createVerticalStrut(10))
