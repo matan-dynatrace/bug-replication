@@ -59,15 +59,17 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
             ): Boolean {
                 if (request?.startsWith("messageSelected:") != true) return false
                 val id = request.substringAfter("messageSelected:")
-                log.info("[RENDER-STALL] messageSelected id=$id fix=${fixEnabled.get()}")
+                log.info("[RENDER-STALL] 1/6 query received id=$id fix=${fixEnabled.get()} ts=${System.currentTimeMillis()}")
 
                 // Step 1: immediately show loading state — same as real plugin sending progress.show
-                sendToWebView(browser, fixEnabled, """{"messageType":"progress.show","body":null}""")
+                sendToWebView(browser, fixEnabled, "progress.show", """{"messageType":"progress.show","body":null}""")
 
                 // Step 2: after simulated server round-trip, deliver snapshot details
+                log.info("[RENDER-STALL] 1/6 scheduling message.enrich.success id=$id delay=800ms")
                 executor.schedule({
+                    log.info("[RENDER-STALL] 1/6 message.enrich.success firing id=$id ts=${System.currentTimeMillis()}")
                     sendToWebView(
-                        browser, fixEnabled,
+                        browser, fixEnabled, "message.enrich.success",
                         """{"messageType":"message.enrich.success","body":${buildDetails(id)}}"""
                     )
                 }, 800L, TimeUnit.MILLISECONDS)
@@ -100,10 +102,16 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
                 "Fix: OFF — click a snapshot; right panel freezes after loading (resize/hover to force repaint)"
         }.also { it.isRepeats = true; it.start() }
 
+        val devToolsButton = JButton("Open DevTools").apply {
+            addActionListener { browser.openDevtools() }
+        }
+
         val controlPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             border = EmptyBorder(6, 8, 6, 8)
             add(fixButton)
+            add(Box.createHorizontalStrut(12))
+            add(devToolsButton)
             add(Box.createHorizontalStrut(12))
             add(statusLabel)
         }
@@ -117,9 +125,12 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
         toolWindow.contentManager.addContent(content)
     }
 
-    private fun sendToWebView(browser: JBCefBrowser, fixEnabled: AtomicBoolean, json: String) {
+    private fun sendToWebView(browser: JBCefBrowser, fixEnabled: AtomicBoolean, msgType: String, json: String) {
+        thisLogger().info("[RENDER-STALL] 2/6 invokeLater queued msgType=$msgType ts=${System.currentTimeMillis()}")
         ApplicationManager.getApplication().invokeLater {
+            thisLogger().info("[RENDER-STALL] 2/6 executeJavaScript calling msgType=$msgType ts=${System.currentTimeMillis()}")
             browser.cefBrowser.executeJavaScript("window.receiveMessage($json)", "", 0)
+            thisLogger().info("[RENDER-STALL] 2/6 executeJavaScript returned msgType=$msgType ts=${System.currentTimeMillis()}")
             if (fixEnabled.get()) {
                 browser.cefBrowser.invalidate()
                 browser.component.repaint()
@@ -216,14 +227,22 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
         status: 'idle',      // 'idle' | 'loading' | 'loaded'
         selectedId: null,
         details: null,
-        showLoading: function() { set({ status: 'loading', details: null }); },
-        showDetails: function(d) { set({ status: 'loaded', details: d }); },
+        showLoading: function() {
+          console.log('[RENDER-STALL] 4/6 store.showLoading ts:', Date.now());
+          set({ status: 'loading', details: null });
+        },
+        showDetails: function(d) {
+          console.log('[RENDER-STALL] 4/6 store.showDetails id:', d.id, 'ts:', Date.now());
+          set({ status: 'loaded', details: d });
+        },
         select: function(id) { set({ selectedId: id }); },
       };
     });
 
     // ── Java → webview bridge (mirrors window.receiveMessage in the real app) ────
     window.receiveMessage = function(msg) {
+      console.log('[RENDER-STALL] 3/6 receiveMessage', msg.messageType, 'ts:', Date.now());
+      document.title = msg.messageType + ':' + Date.now();
       const s = snapshotStore.getState();
       if (msg.messageType === 'progress.show') {
         s.showLoading();
@@ -276,6 +295,12 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
     function DetailPanel() {
       const state = useStore(snapshotStore, function(s) { return { status: s.status, details: s.details }; });
       const status = state.status, details = state.details;
+
+      console.log('[RENDER-STALL] 5/6 DetailPanel render status:', status, 'ts:', Date.now());
+
+      useEffect(function() {
+        console.log('[RENDER-STALL] 6/6 DOM committed status:', status, details ? 'id:' + details.id : '', 'ts:', Date.now());
+      }, [status]);
 
       if (status === 'idle') {
         return e('div', { className: 'detail-idle' }, '← Select a snapshot to view details');
