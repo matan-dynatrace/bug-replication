@@ -167,7 +167,6 @@ class JcefRenderStallToolWindowFactory : ToolWindowFactory {
     .list-header { padding: 6px 12px; background: #252526; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #3e3e3e; }
     .snapshot-rows { overflow-y: auto; flex: 1; }
     .snapshot-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; padding: 7px 12px; cursor: pointer; border-bottom: 1px solid #2a2a2a; }
-    .snapshot-row:hover { background: #2a2d2e; }
     .snapshot-row.selected { background: #094771; }
     .snap-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .snap-bp { color: #888; white-space: nowrap; }
